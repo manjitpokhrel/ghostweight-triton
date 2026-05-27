@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghostweight-triton"
+version = "0.1.0"
+description = "Training-free inference sparsity via dead neuron masking with Triton kernels"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Manjit Pokhrel", email = "manjit@ku.edu.np"},
+]
+keywords = ["deep-learning", "inference", "sparsity", "triton", "cuda", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.2.0",
+    "triton>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+bench = [
+    "transformers>=4.35.0",
+    "pandas",
+    "matplotlib",
+]
+all = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "transformers>=4.35.0",
+    "pandas",
+    "matplotlib",
+]
+
+[project.urls]
+Homepage = "https://github.com/manjitpokhrel/ghostweight-triton"
+Repository = "https://github.com/manjitpokhrel/ghostweight-triton"
+Issues = "https://github.com/manjitpokhrel/ghostweight-triton/issues"
+
+[tool.setuptools.packages.find]
+include = ["ghostweight_triton*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["ghostweight_triton"]
+omit = ["tests/*", "benchmarks/*", "examples/*"]
