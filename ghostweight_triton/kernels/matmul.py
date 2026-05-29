@@ -37,6 +37,7 @@ def _ghostweight_matmul_kernel(
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    ALLOW_TF32: tl.constexpr,
 ):
     pid_m = tl.program_id(0)
     pid_n = tl.program_id(1)
@@ -70,7 +71,7 @@ def _ghostweight_matmul_kernel(
         w_mask = k_mask[:, None] & (n_offs[None, :] < N)
         w_tile = tl.load(w_ptrs, mask=w_mask, other=0.0)
 
-        acc += tl.dot(a_tile, w_tile)
+        acc += tl.dot(a_tile, w_tile, allow_tf32=ALLOW_TF32)
 
     c_ptrs = (
         C_ptr
@@ -123,6 +124,11 @@ def ghostweight_matmul(
 
     grid = (triton.cdiv(M, BLOCK_M), triton.cdiv(N, BLOCK_N))
 
+    # TF32 is only safe for float16 inputs.
+    # For float32, TF32 truncates the mantissa and breaks 1e-4 tolerance
+    # on Blackwell (sm_120) and Ampere+ hardware.
+    allow_tf32 = activations.dtype == torch.float16
+
     _ghostweight_matmul_kernel[grid](
         activations, weights, C, alive_indices,
         M, N, K, K_alive,
@@ -130,6 +136,7 @@ def ghostweight_matmul(
         weights.stride(0), weights.stride(1),
         C.stride(0), C.stride(1),
         BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N, BLOCK_K=BLOCK_K,
+        ALLOW_TF32=allow_tf32,
     )
 
     return C
