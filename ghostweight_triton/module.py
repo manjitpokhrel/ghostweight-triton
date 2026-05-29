@@ -105,7 +105,7 @@ class GhostLinear(nn.Module):
 
         K_alive = alive.shape[0]
         sparsity = 1.0 - K_alive / self.in_features
-        self._last_sparsity = sparsity
+        self._last_sparsity = float(sparsity)
 
         # Choose compute path
         if sparsity < self.min_sparsity_to_activate or K_alive == 0:
@@ -131,6 +131,9 @@ class GhostLinear(nn.Module):
             )
             self._mask_frozen = True
 
+            k_alive = int(self._frozen_indices.numel())
+            self._last_sparsity = float(1.0 - k_alive / self.in_features)
+
     def unfreeze_mask(self) -> None:
         """Switch back to dynamic per-forward masking."""
         self._mask_frozen = False
@@ -138,7 +141,7 @@ class GhostLinear(nn.Module):
 
     @property
     def current_sparsity(self) -> float:
-        """Sparsity from most recent forward pass."""
+        """Sparsity from current frozen mask or most recent forward pass."""
         return self._last_sparsity
 
     @property

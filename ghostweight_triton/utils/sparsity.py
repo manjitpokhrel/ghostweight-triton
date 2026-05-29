@@ -23,29 +23,44 @@ def sparsity_stats(mask: torch.Tensor) -> dict:
     alive = int(mask.sum().item())
     dead = total - alive
     return {
-        "total":     total,
-        "alive":     alive,
-        "dead":      dead,
-        "pct_dead":  dead / total if total > 0 else 0.0,
+        "total": total,
+        "alive": alive,
+        "dead": dead,
+        "pct_dead": dead / total if total > 0 else 0.0,
         "pct_alive": alive / total if total > 0 else 0.0,
     }
 
 
 def log_sparsity(
-    report: dict[str, float],
+    report: dict[str, float] | torch.Tensor,
     title: str = "GhostWeight Sparsity Report",
 ) -> None:
     """
-    Pretty-print a sparsity report from get_sparsity_report().
+    Pretty-print either:
+      1. a sparsity report dict: {layer_name: sparsity_fraction}
+      2. a dead-neuron mask tensor: [K] with 1=alive, 0=dead
 
     Parameters
     ----------
-    report : dict[str, float]
-        {layer_name: sparsity_fraction}
+    report : dict[str, float] | torch.Tensor
+        Layer sparsity mapping or 1D mask tensor.
     title : str
         Header string.
     """
-    if not report:
+    if isinstance(report, torch.Tensor):
+        stats = sparsity_stats(report)
+
+        sep = "─" * 60
+        print(f"\n{sep}")
+        print(f"  {title}")
+        print(sep)
+        print(f"  Total neurons : {stats['total']}")
+        print(f"  Alive         : {stats['alive']} ({stats['pct_alive']:.1%})")
+        print(f"  Dead          : {stats['dead']} ({stats['pct_dead']:.1%})")
+        print(f"{sep}\n")
+        return
+
+    if report is None or len(report) == 0:
         print(f"[{title}] No GhostLinear layers found.")
         return
 
@@ -62,6 +77,7 @@ def log_sparsity(
 
     total_sparsity = 0.0
     for name, sparsity in report.items():
+        sparsity = float(sparsity)
         filled = int(sparsity * bar_width)
         bar = "█" * filled + "░" * (bar_width - filled)
         print(f"  {name:<{col_width}}  {sparsity:>7.1%}  {bar}")
