@@ -25,7 +25,8 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "torch>=2.2.0",
-    "triton>=3.0.0",
+    "triton-windows>=3.0.0; sys_platform == 'win32'",
+    "triton>=3.0.0; sys_platform == 'linux'",
 ]
 
 [project.optional-dependencies]
